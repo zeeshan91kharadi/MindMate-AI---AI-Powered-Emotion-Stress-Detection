@@ -1,0 +1,40 @@
+{
+  "placeholderImages": [
+    {
+      "id": "hero-background",
+      "description": "Abstract purple and blue nebula",
+      "imageUrl": "https://picsum.photos/seed/nebula/1920/1080",
+      "imageHint": "abstract nebula"
+    },
+    {
+      "id": "relax-meadow",
+      "description": "Calm meadow at sunrise",
+      "imageUrl": "https://picsum.photos/seed/meadow/800/600",
+      "imageHint": "calm meadow"
+    },
+    {
+      "id": "user-avatar",
+      "description": "A placeholder for user avatar",
+      "imageUrl": "https://picsum.photos/seed/user/100/100",
+      "imageHint": "person portrait"
+    },
+    {
+      "id": "yoga-pose",
+      "description": "Silhouette of a person in a yoga pose",
+      "imageUrl": "https://picsum.photos/seed/yoga/400/300",
+      "imageHint": "yoga silhouette"
+    },
+    {
+      "id": "meditation-lake",
+      "description": "Person meditating by a calm lake",
+      "imageUrl": "https://picsum.photos/seed/meditation/400/300",
+      "imageHint": "meditation lake"
+    },
+    {
+      "id": "breathing-exercise",
+      "description": "Abstract waves representing breathing",
+      "imageUrl": "https://picsum.photos/seed/breathing/400/300",
+      "imageHint": "abstract waves"
+    }
+  ]
+}

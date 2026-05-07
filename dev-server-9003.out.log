@@ -1,0 +1,11 @@
+   ▲ Next.js 15.5.4 (Turbopack)
+   - Local:        http://localhost:9003
+   - Network:      http://10.31.173.52:9003
+
+ ✓ Starting...
+Creating turbopack project {
+  dir: 'C:\\Users\\moham\\Downloads\\MindMate-AI-main\\MindMate-AI-main',
+  testMode: true
+}
+ ✓ Ready in 1845ms
+[?25h

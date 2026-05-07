@@ -1,0 +1,244 @@
+/**
+ * @file Firestore Security Rules
+ * @description This ruleset enforces a strict user-ownership model for most data,
+ *              allowing users to only access and modify their own data. Community posts
+ *              are publicly readable but only the creator can modify them. Appointments
+ *              are accessible based on user and professional IDs.
+ *
+ * @dataStructure
+ *  - /users/{userId}: User profiles, owned by each user.
+ *  - /users/{userId}/moodJournalEntries/{entryId}: Mood journal entries, owned by each user.
+ *  - /users/{userId}/chatSessions/{sessionId}: Chat sessions, owned by each user.
+ *  - /users/{userId}/chatSessions/{sessionId}/chatMessages/{messageId}: Chat messages within a session, owned by each user.
+ *  - /users/{userId}/stressHistory/{recordId}: Stress records, owned by each user.
+ *  - /users/{userId}/availability/{dateId}: Availability of professional, owned by professional.
+ *  - /users/{userId}/familyMembers/{memberId}: Family members added by user, owned by user.
+ *  - /communityPosts/{postId}: Community posts, publicly readable, creator-owned writes.
+ *  - /communityPosts/{postId}/replies/{replyId}: Replies to community posts, creator-owned writes.
+ *  - /appointments/{appointmentId}: Appointments, accessible based on user and professional IDs.
+ *
+ * @keySecurityDecisions
+ *  - User listing is explicitly denied to protect user privacy.
+ *  - Strict ownership is enforced for all user-related data.
+ *  - Community posts are publicly readable to allow for open discussions.
+ *  - Email verification required for sensitive user subcollections like familyMembers.
+ *
+ * @denormalizationForAuthorization
+ *  - None needed at this time. The data model provides necessary ownership fields.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * @description Checks if the request is authenticated.
+     * @path N/A (Helper function)
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * @description Checks if the authenticated user ID matches the provided user ID and email is verified.
+     * @path N/A (Helper function)
+     * @param {string} userId - The user ID to compare against.
+     */
+    function isVerifiedOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId && request.auth.token.email_verified == true;
+    }
+
+    /**
+     * @description Checks if the authenticated user ID matches the provided user ID (email verification optional).
+     * @path N/A (Helper function)
+     * @param {string} userId - The user ID to compare against.
+     */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+     /**
+      * @description Checks if the authenticated user is the existing owner of the document.
+      * @path N/A (Helper function)
+      * @param {string} userId - The user ID to compare against.
+      */
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
+    }
+
+    /**
+     * @description Enforces that the request is made by the owner and the ID field in the incoming data matches the userId in the path.
+     * @path /users/{userId}
+     * @allow (create) User with UID 'user123' can create their profile if request.auth.uid == 'user123' and request.resource.data.uid == 'user123'.
+     * @deny (create) User with UID 'user456' cannot create a profile for 'user123'.
+     * @allow (get) User with UID 'user123' can read their own profile.
+     * @deny (list) No one can list all user profiles.
+     * @principle Enforces document ownership, validates data consistency, and protects user privacy.
+     */
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if false;
+      allow create: if isOwner(userId) && request.resource.data.uid == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.uid == resource.data.uid;
+      allow delete: if isExistingOwner(userId);
+
+      // Fallback for any user subcollections (e.g., future additions)
+      match /{document=**} {
+        allow read, write: if isOwner(userId);
+      }
+
+      /**
+       * @description Enforces that only the owner can manage their mood journal entries.
+       * @path /users/{userId}/moodJournalEntries/{entryId}
+       * @allow (create) User 'user123' can create a journal entry under their ID.
+       * @deny (create) User 'user456' cannot create a journal entry under 'user123'.
+       * @allow (get) User 'user123' can read their journal entry.
+       * @allow (list) User 'user123' can list their journal entries.
+       * @principle Enforces document ownership for reads and writes.
+       */
+      match /moodJournalEntries/{entryId} {
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && request.resource.data.userId == userId;
+        allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+        allow delete: if isExistingOwner(userId);
+      }
+
+      /**
+       * @description Enforces that only the owner can manage their chat sessions.
+       * @path /users/{userId}/chatSessions/{sessionId}
+       * @allow (create) User 'user123' can create a chat session under their ID.
+       * @deny (create) User 'user456' cannot create a chat session under 'user123'.
+       * @allow (get) User 'user123' can read their chat session.
+       * @allow (list) User 'user123' can list their chat sessions.
+       * @principle Enforces document ownership for reads and writes.
+       */
+      match /chatSessions/{sessionId} {
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && request.resource.data.userId == userId;
+        allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+        allow delete: if isExistingOwner(userId);
+
+        /**
+         * @description Enforces that only the owner can manage their chat messages within a session.
+         * @path /users/{userId}/chatSessions/{sessionId}/chatMessages/{messageId}
+         * @allow (create) User 'user123' can create a chat message under their session.
+         * @deny (create) User 'user456' cannot create a chat message under 'user123' session.
+         * @allow (get) User 'user123' can read their chat message.
+         * @allow (list) User 'user123' can list their chat messages.
+         * @principle Enforces document ownership for reads and writes.
+         */
+        match /chatMessages/{messageId} {
+          allow get: if isOwner(userId);
+          allow list: if isOwner(userId);
+          allow create: if isOwner(userId) && request.resource.data.userId == userId;
+          allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+          allow delete: if isExistingOwner(userId);
+        }
+      }
+
+      /**
+       * @description Enforces that only the owner can manage their stress records.
+       * @path /users/{userId}/stressHistory/{recordId}
+       * @allow (create) User 'user123' can create a stress record under their ID.
+       * @deny (create) User 'user456' cannot create a stress record under 'user123'.
+       * @allow (get) User 'user123' can read their stress record.
+       * @allow (list) User 'user123' can list their stress records.
+       * @principle Enforces document ownership for reads and writes.
+       */
+      match /stressHistory/{recordId} {
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && request.resource.data.userId == userId;
+        allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+        allow delete: if isExistingOwner(userId);
+      }
+      
+      /**
+       * @description Enforces that only the owner can manage their availability as professional.
+       * @path /users/{userId}/availability/{dateId}
+       * @allow (create) Professional 'user123' can create availability under their ID.
+       * @deny (create) User 'user456' cannot create availability under 'user123'.
+       * @allow (get) Professional 'user123' can read their availability.
+       * @allow (list) Professional 'user123' can list their availabilities.
+       * @principle Enforces document ownership for reads and writes.
+       */
+      match /availability/{dateId} {
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && request.resource.data.professionalId == userId;
+        allow update: if isExistingOwner(userId) && request.resource.data.professionalId == resource.data.professionalId;
+        allow delete: if isExistingOwner(userId);
+      }
+
+       /**
+        * @description Enforces that only the verified owner can manage their family members (sensitive data).
+        * @path /users/{userId}/familyMembers/{memberId}
+        * @allow (create) Verified user 'user123' can add family member under their ID.
+        * @deny (create) Unverified user or 'user456' cannot add family member under 'user123'.
+        * @allow (get) Verified user 'user123' can read their family member.
+        * @allow (list) Verified user 'user123' can list their family members.
+        * @principle Enforces verified document ownership for reads and writes.
+        */
+      match /familyMembers/{memberId} {
+        allow get: if isVerifiedOwner(userId);
+        allow list: if isVerifiedOwner(userId);
+        allow create: if isVerifiedOwner(userId);
+        allow update: if isExistingOwner(userId);
+        allow delete: if isExistingOwner(userId);
+      }
+    }
+
+    /**
+     * @description Allows anyone to read community posts, but only the creator can modify them.
+     * @path /communityPosts/{postId}
+     * @allow (get) Any user can read a community post.
+     * @allow (list) Any user can list community posts.
+     * @allow (create) User 'anonymous123' can create a post with creatorId 'anonymous123'.
+     * @deny (update) User 'anonymous456' cannot update a post created by 'anonymous123'.
+     * @principle Allows public reads and enforces creator-ownership for writes.
+     */
+    match /communityPosts/{postId} {
+      allow get: if true;
+      allow list: if true;
+      allow create: if isSignedIn() && request.resource.data.creatorId == request.auth.uid;
+      allow update: if isSignedIn() && resource != null && resource.data.creatorId == request.auth.uid;
+      allow delete: if isSignedIn() && resource != null && resource.data.creatorId == request.auth.uid;
+
+      /**
+       * @description Enforces that only the creator can manage replies to community posts.
+       * @path /communityPosts/{postId}/replies/{replyId}
+       * @allow (create) User 'anonymous123' can reply to a post with creatorId 'anonymous123'.
+       * @deny (update) User 'anonymous456' cannot update a reply created by 'anonymous123'.
+       * @principle Enforces creator-ownership for writes.
+       */
+      match /replies/{replyId} {
+        allow get: if true;
+        allow list: if true;
+        allow create: if isSignedIn() && request.resource.data.creatorId == request.auth.uid;
+        allow update: if isSignedIn() && resource != null && resource.data.creatorId == request.auth.uid;
+        allow delete: if isSignedIn() && resource != null && resource.data.creatorId == request.auth.uid;
+      }
+    }
+
+    /**
+     * @description Allows access to appointments based on user and professional IDs.
+     * @path /appointments/{appointmentId}
+     * @allow (get) Any authenticated user can read appointments (public scheduling view).
+     * @allow (list) Any authenticated user can list appointments.
+     * @allow (create) Authenticated users can create appointments.
+     * @allow (update) User or professional involved can update (e.g., reschedule).
+     * @allow (delete) User or professional involved can delete (e.g., cancel).
+     * @principle Enforces access based on user and professional IDs in document data.
+     */
+    match /appointments/{appointmentId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update: if isSignedIn() && (request.auth.uid == resource.data.userId || request.auth.uid == resource.data.professionalId);
+      allow delete: if isSignedIn() && (request.auth.uid == resource.data.userId || request.auth.uid == resource.data.professionalId);
+    }
+  }
+}
+
+

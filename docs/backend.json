@@ -1,0 +1,315 @@
+
+{
+  "entities": {
+    "UserProfile": {
+      "title": "User Profile",
+      "type": "object",
+      "description": "Represents a user's public profile.",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "The user's unique ID."
+        },
+        "email": {
+          "type": "string",
+          "description": "The user's email address.",
+          "format": "email"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "The user's display name."
+        },
+        "photoURL": {
+          "type": "string",
+          "description": "The URL of the user's profile picture.",
+          "format": "uri"
+        },
+        "role": {
+          "type": "string",
+          "enum": ["user", "professional"],
+          "description": "The role of the user, e.g., 'user' or 'professional'."
+        }
+      },
+      "required": [
+        "uid",
+        "email",
+        "role"
+      ]
+    },
+    "MoodJournalEntry": {
+      "title": "Mood Journal Entry",
+      "type": "object",
+      "description": "A single entry in a user's mood journal.",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "The ID of the user who owns this entry."
+        },
+        "date": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The timestamp when the entry was created."
+        },
+        "text": {
+          "type": "string",
+          "description": "The content of the journal entry."
+        },
+        "emotionalState": {
+          "type": "string",
+          "description": "The AI-analyzed emotional state."
+        },
+        "stressLevel": {
+          "type": "number",
+          "description": "The AI-analyzed stress level (0-100)."
+        }
+      },
+      "required": [
+        "userId",
+        "date",
+        "text"
+      ]
+    },
+    "ChatSession": {
+      "title": "Chat Session",
+      "description": "Represents a single chat conversation.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "The ID of the user who owns this chat session."
+        },
+        "title": {
+          "type": "string",
+          "description": "A title for the chat session, often derived from the first message."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The timestamp when the chat session was created."
+        }
+      },
+      "required": ["userId", "title", "createdAt"]
+    },
+    "ChatMessage": {
+      "title": "Chat Message",
+      "type": "object",
+      "description": "A single message in the AI companion chat.",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "The ID of the user in the chat."
+        },
+        "role": {
+          "type": "string",
+          "enum": [
+            "user",
+            "assistant"
+          ],
+          "description": "The role of the sender (user or AI assistant)."
+        },
+        "content": {
+          "type": "string",
+          "description": "The content of the message."
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The timestamp of the message."
+        }
+      },
+      "required": [
+        "userId",
+        "role",
+        "content",
+        "timestamp"
+      ]
+    },
+    "StressRecord": {
+      "title": "Stress Record",
+      "type": "object",
+      "description": "A single record of a user's stress level at a point in time.",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "The ID of the user."
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The timestamp of the stress measurement."
+        },
+        "score": {
+          "type": "number",
+          "description": "The stress score (0-100)."
+        }
+      },
+      "required": [
+        "userId",
+        "timestamp",
+        "score"
+      ]
+    },
+    "CommunityPost": {
+      "title": "Community Post",
+      "type": "object",
+      "description": "A single anonymous post on the community wall.",
+      "properties": {
+        "creatorId": {
+          "type": "string",
+          "description": "The anonymous ID of the user who created the post."
+        },
+        "content": {
+          "type": "string",
+          "description": "The text content of the post."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The timestamp when the post was created."
+        }
+      },
+      "required": ["creatorId", "content", "createdAt"]
+    },
+    "CommunityReply": {
+      "title": "Community Reply",
+      "type": "object",
+      "description": "A single anonymous reply to a community post.",
+      "properties": {
+        "creatorId": {
+          "type": "string",
+          "description": "The anonymous ID of the user who created the reply."
+        },
+        "postId": {
+          "type": "string",
+          "description": "The ID of the post this reply belongs to."
+        },
+        "content": {
+          "type": "string",
+          "description": "The text content of the reply."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The timestamp when the reply was created."
+        }
+      },
+      "required": ["creatorId", "postId", "content", "createdAt"]
+    },
+    "FamilyMember": {
+      "title": "Family Member",
+      "type": "object",
+      "description": "Represents a family member added by a user for notifications.",
+      "properties": {
+        "memberUid": {
+          "type": "string",
+          "description": "The unique ID of the family member user."
+        },
+        "displayName": {
+          "type": "string",
+          "description": "The display name of the family member."
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "The email of the family member."
+        },
+        "addedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The timestamp when the family member was added."
+        }
+      },
+      "required": ["memberUid", "displayName", "email", "addedAt"]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "google.com"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "UserProfile",
+          "schema": {
+            "$ref": "#/entities/UserProfile"
+          },
+          "description": "Stores user profiles."
+        }
+      },
+      {
+        "path": "/users/{userId}/moodJournalEntries/{entryId}",
+        "definition": {
+          "entityName": "MoodJournalEntry",
+          "schema": {
+            "$ref": "#/entities/MoodJournalEntry"
+          },
+          "description": "Stores mood journal entries for each user."
+        }
+      },
+      {
+        "path": "/users/{userId}/chatSessions/{sessionId}",
+        "definition": {
+          "entityName": "ChatSession",
+          "schema": {
+            "$ref": "#/entities/ChatSession"
+          },
+          "description": "Stores chat sessions for each user."
+        }
+      },
+      {
+        "path": "/users/{userId}/chatSessions/{sessionId}/chatMessages/{messageId}",
+        "definition": {
+          "entityName": "ChatMessage",
+          "schema": {
+            "$ref": "#/entities/ChatMessage"
+          },
+          "description": "Stores AI companion chat history for each user within a session."
+        }
+      },
+      {
+        "path": "/users/{userId}/stressHistory/{recordId}",
+        "definition": {
+          "entityName": "StressRecord",
+          "schema": {
+            "$ref": "#/entities/StressRecord"
+          },
+          "description": "Stores historical stress scores for each user."
+        }
+      },
+       {
+        "path": "/users/{userId}/familyMembers/{memberId}",
+        "definition": {
+          "entityName": "FamilyMember",
+          "schema": {
+            "$ref": "#/entities/FamilyMember"
+          },
+          "description": "Stores family members added by a user."
+        }
+      },
+      {
+        "path": "/communityPosts/{postId}",
+        "definition": {
+          "entityName": "CommunityPost",
+          "schema": {
+            "$ref": "#/entities/CommunityPost"
+          },
+          "description": "Stores anonymous community posts."
+        }
+      },
+      {
+        "path": "/communityPosts/{postId}/replies/{replyId}",
+        "definition": {
+          "entityName": "CommunityReply",
+          "schema": {
+            "$ref": "#/entities/CommunityReply"
+          },
+          "description": "Stores anonymous replies to community posts."
+        }
+      }
+    ]
+  }
+}
