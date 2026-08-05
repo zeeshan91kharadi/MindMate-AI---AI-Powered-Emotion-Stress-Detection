@@ -4,7 +4,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AdminDashboard } from "./admin-dashboard";
 import { ManageAppointments } from "../appointments/manage-appointments";
-import { CalmSenseLogo } from "../icons";
+import { TheraMindLogo } from "../icons";
 import { Button } from "../ui/button";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
@@ -15,7 +15,7 @@ export function ProfessionalDashboard() {
     <div className="min-h-screen p-4 md:p-8">
         <header className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-4">
-            <CalmSenseLogo className="w-10 h-10 text-primary" />
+            <TheraMindLogo className="w-10 h-10 text-primary" />
             <div>
                 <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Professional Dashboard</h1>
                 <p className="text-muted-foreground">Manage appointments and view user trends.</p>
