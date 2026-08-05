@@ -1,6 +1,6 @@
 import type { SVGProps } from 'react';
 
-export function CalmSenseLogo(props: SVGProps<SVGSVGElement>) {
+export function TheraMindLogo(props: SVGProps<SVGSVGElement>) {
   return (
     <svg
       {...props}
